@@ -1,6 +1,7 @@
 package org.ng12306.tpms.runtime;
 
 import org.diting.collections.*;
+import org.ng12306.tpms.ObjectWithSite;
 
 public class TicketSalableRangeFilter extends ObjectWithSite
     implements IPlanTicketFilter 
@@ -13,10 +14,10 @@ public class TicketSalableRangeFilter extends ObjectWithSite
 
 			@Override
 			public boolean evaluate(PlanTicket ticket) throws Exception {
-				SalableRange range =  ticket.getSalableRange();
+				SalableRange range =  ticket.salableRange;
 				
-				return range.getDepartureStart() <= args.getDestinationStop() && args.getDepartureStop() <= range.getDepartureEnd()
-						&& range.getDestinationStart() <= ticket.getEndStop() && ticket.getEndStop() <= range.getDestinationEnd();
+				return range.departureStart <= args.destinationStop && args.departureStop <= range.departureEnd
+						&& range.destinationStart <= ticket.endStop && ticket.endStop <= range.destinationEnd;
 				
 			}});
 	}

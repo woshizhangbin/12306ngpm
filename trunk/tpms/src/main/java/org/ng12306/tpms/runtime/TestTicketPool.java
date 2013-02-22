@@ -3,6 +3,10 @@ package org.ng12306.tpms.runtime;
 import java.util.*;
 
 import org.diting.collections.*;
+import org.ng12306.tpms.IObjectWithSite;
+import org.ng12306.tpms.ObjectWithSite;
+import org.ng12306.tpms.ServiceContainer;
+import org.ng12306.tpms.TicketQueryEvent;
 
 
 public class TestTicketPool extends ObjectWithSite 
@@ -10,62 +14,51 @@ public class TestTicketPool extends ObjectWithSite
 {
 
 	public TestTicketPool(Train train) {
-		this._train = train;
+		this.train = train;
 	}
 	
-	private Train _train;
-
-	public Train getTrain() {
-		return this._train;
-	}
+	public Train train;
 	
-	private Route _route;
+	public Route route;
 
-	public Route getRoute() {
-		return this._route;
-	}
-
-	
-	private ArrayList<StopRangeGroup> _stopRangeGroups = new ArrayList<StopRangeGroup>();
+	private ArrayList<StopRangeGroup> stopRangeGroups = new ArrayList<StopRangeGroup>();
 
 	private void createPlanTickets() throws Exception
 	{
 		
 		//Here we are creating plan tickets those can be free sold between any two stations. 
-		int maxStopSeq = this._route.getStops().size() - 1;
+		int maxStopSeq = this.route.stops.size() - 1;
 		
 		StopRangeGroup fullRangeGroup = new StopRangeGroup();
 		StopRange stopRange = new StopRange();
 		stopRange.start = 0;
 		stopRange.end = maxStopSeq;
 		 
-		fullRangeGroup.setRange(stopRange);
-		this._stopRangeGroups.add(fullRangeGroup);
+		fullRangeGroup.range = stopRange;
+		this.stopRangeGroups.add(fullRangeGroup);
 		
-		for(OperatingSeat seat : Queries.query(this._train.getCars()).selectMany(new Selector<Car, Iterable<OperatingSeat>>(){
+		for(OperatingSeat seat : Queries.query(this.train.cars).selectMany(new Selector<Car, Iterable<OperatingSeat>>(){
 
 			@Override
 			public Iterable<OperatingSeat> select(Car item) {
-				return item.getSeats();
+				return item.seats;
 			}}))
 		{
 		     PlanTicket pt = new PlanTicket();
-		     pt.setStartStop(0);
-		     pt.setEndStop(maxStopSeq);
-		     pt.setId(UUID.randomUUID());
-		     pt.setOrginalId(pt.getId());
-		     pt.setSeat(seat);
+		     pt.startStop = 0;
+		     pt.endStop = maxStopSeq;
+		     pt.id = UUID.randomUUID();
+		     pt.originalId = pt.id;
+		     pt.seat = seat;
 		     
-		     SalableRange range = pt.getSalableRange();
-		     range.setDepartureStart(0);
-		     range.setDepartureEnd(maxStopSeq);
-		     range.setDestinationStart(0);
-		     range.setDestinationEnd(maxStopSeq);
+		     SalableRange range = pt.salableRange;
+		     range.departureStart = 0;
+		     range.departureEnd = maxStopSeq;
+		     range.destinationStart = 0;
+		     range.destinationEnd = maxStopSeq;
 		     
-		     fullRangeGroup.getTickets().add(pt);
-		     pt.setGroup(fullRangeGroup);
-		     
-		    // break;
+		     fullRangeGroup.tickets.add(pt);
+		     pt.group = fullRangeGroup;
 		    
 		}
 	}
@@ -76,12 +69,12 @@ public class TestTicketPool extends ObjectWithSite
         IRailwayRepository repo = this.getSite().getRequiredService(IRailwayRepository.class);
 		
 		
-		this._route = Queries.query(this._train.getTrainNumber().getRoutes()).first(new Predicate<Route>(){
+		this.route = Queries.query(this.train.trainNumber.routes).first(new Predicate<Route>(){
 
 			@Override
 			public boolean evaluate(Route r) throws Exception {
-				return  (r.getStartDate().isBefore(_train.getDepartureDate()) || r.getStartDate().isEqual(_train.getDepartureDate()))
-						&& r.getEndDate().isAfter(_train.getDepartureDate());
+				return  (r.startDate.isBefore(train.departureDate) || r.startDate.isEqual(train.departureDate))
+						&& r.endDate.isAfter(train.departureDate);
 			}});
 		
 		
@@ -89,22 +82,22 @@ public class TestTicketPool extends ObjectWithSite
 		for(int i = 0; i < 18; i ++)
 		{
 			Car car = new Car();
-			car.setId(UUID.randomUUID());
-			car.setTrain(this._train);
+			car.id = UUID.randomUUID();
+			car.train = this.train;
 			CarType ct = repo.getCarTypes()[ i % repo.getCarTypes().length];
-			car.setCarTyp(ct);
-			_train.getCars().add(car);
+			car.carType = ct;
+			train.cars.add(car);
 			
-			for(Seat seat : ct.getSeats())
+			for(Seat seat : ct.seats)
 			{
 			     OperatingSeat oseat = new OperatingSeat();
-			     oseat.setId(UUID.randomUUID());
-			     oseat.setCar(car);
-			     oseat.setSeatNumber(seat.getNumber());
-			     oseat.setSequence(seatSeq);
-			     oseat.setSeatType(ct.getSeatType());
+			     oseat.id = UUID.randomUUID();
+			     oseat.car = car;
+			     oseat.seatNumber = seat.number;
+			     oseat.sequence = seatSeq;
+			     oseat.seatType = ct.seatType;
 			     seatSeq++;
-			     car.getSeats().add(oseat);
+			     car.seats.add(oseat);
 			}
 		}
 	}
@@ -120,12 +113,12 @@ public class TestTicketPool extends ObjectWithSite
 	
 	private int getStationSequence(final String name) throws Exception
 	{
-		return Queries.query(this._route.getStops()).first(new Predicate<RouteStop>(){
+		return Queries.query(this.route.stops).first(new Predicate<RouteStop>(){
 
 			@Override
 			public boolean evaluate(RouteStop stop) throws Exception {
-				return stop.getStation().getName().equals(name);
-			}}).getSequence();
+				return stop.station.name.equals(name);
+			}}).sequence;
 	}
 	
 
@@ -148,35 +141,36 @@ public class TestTicketPool extends ObjectWithSite
 		
 		for(PlanTicket pt : planTickets)
 		{
-			pt.getGroup().getTickets().remove(pt);
-			if(pt.getGroup().getTickets().size() == 0)
+			pt.group.tickets.remove(pt);
+			if(pt.group.tickets.size() == 0)
 			{
-			    this._stopRangeGroups.remove(pt.getGroup());	
+			    this.stopRangeGroups.remove(pt.group);	
 			}
 			
-			if(args.getDepartureStop() > pt.getStartStop())
+			if(args.departureStop > pt.startStop)
 			{
 				PlanTicket pre = new PlanTicket();
-				pre.setId(UUID.randomUUID());
-				pre.setOrginalId(pt.getOrignalId());
-				pre.setStartStop(pt.getStartStop());
-				pre.setEndStop(args.getDepartureStop());
-				pre.setSeat(pt.getSeat());
-				pre.getSalableRange().copyFrom(pt.getSalableRange());
+				pre.id = UUID.randomUUID();
+				pre.originalId = pt.originalId;
+				pre.startStop = pt.startStop;
+				pre.endStop = args.departureStop;
+				pre.seat = pt.seat;
+				pt.salableRange.copyTo(pre.salableRange);
+				
 				this.addPlanTicketToGroup(pre);
 				
 			}
 			
 			
-			if(args.getDestinationStop() < pt.getEndStop())
+			if(args.destinationStop < pt.endStop)
 			{
 				PlanTicket after = new PlanTicket();
-				after.setId(UUID.randomUUID());
-				after.setOrginalId(pt.getOrignalId());
-				after.setStartStop(args.getDestinationStop());
-				after.setEndStop(pt.getEndStop());
-				after.setSeat(pt.getSeat());
-				after.getSalableRange().copyFrom(pt.getSalableRange());
+				after.id = UUID.randomUUID();
+				after.originalId = pt.originalId;
+				after.startStop = args.destinationStop;
+				after.endStop = pt.endStop;
+				after.seat = pt.seat;
+				pt.salableRange.copyTo(after.salableRange);
 				this.addPlanTicketToGroup(after);
 			}
 			
@@ -184,7 +178,7 @@ public class TestTicketPool extends ObjectWithSite
 		}
 		
 		
-		if(this._stopRangeGroups.size() == 0)
+		if(this.stopRangeGroups.size() == 0)
 		{
 			this._isSoldOut = true;
 		}
@@ -196,27 +190,26 @@ public class TestTicketPool extends ObjectWithSite
 		{
 			PlanTicket pt = planTickets[i];
 			rs[i] = new TicketPoolTicket();
-			rs[i].setSeat(pt.getSeat());
-			rs[i].setDepartureStop(args.getDepartureStop());
-			rs[i].setDestinationStop(args.getDestinationStop());
-			rs[i].setPool(this);
+			rs[i].seat = pt.seat;
+			rs[i].departureStop = args.departureStop;
+			rs[i].destinationStop = args.destinationStop;
+			rs[i].pool = this;
 		}
-		
-		
+
 		return rs;
 	}
 	
 	private void addPlanTicketToGroup(PlanTicket pt)
 	{
 		StopRange range = new StopRange();
-		range.start = pt.getStartStop();
-		range.end = pt.getEndStop();
+		range.start = pt.startStop;
+		range.end = pt.endStop;
 		
-		int pos = CollectionUtils.binarySearchBy(this._stopRangeGroups, range, new Selector<StopRangeGroup, StopRange>(){
+		int pos = CollectionUtils.binarySearchBy(this.stopRangeGroups, range, new Selector<StopRangeGroup, StopRange>(){
 
 			@Override
 			public StopRange select(StopRangeGroup item) {
-				return item.getRange();
+				return item.range;
 			}}, StopRangeComparator.Default);
 		
 		
@@ -224,17 +217,17 @@ public class TestTicketPool extends ObjectWithSite
 		
 		if(pos >= 0)
 		{
-			group = this._stopRangeGroups.get(pos);
+			group = this.stopRangeGroups.get(pos);
 		}
 		else
 		{
 			group = new StopRangeGroup();
-			group.setRange(range);
-			this._stopRangeGroups.add(~pos, group);
+			group.range = range;
+			this.stopRangeGroups.add(~pos, group);
 		}
 		
-		pt.setGroup(group);
-		group.getTickets().add(pt);
+		pt.group = group;
+		group.tickets.add(pt);
 	}
 	
 	
@@ -243,19 +236,19 @@ public class TestTicketPool extends ObjectWithSite
 	
 		IPlanTicketFilter[] filters = this.createFilters();
 		
-		Iterable<PlanTicket> rs = Queries.query(this._stopRangeGroups)
+		Iterable<PlanTicket> rs = Queries.query(this.stopRangeGroups)
 				.where(new Predicate<StopRangeGroup>(){
 
 					@Override
 					public boolean evaluate(StopRangeGroup group)
 							throws Exception {
-						return group.getRange().start <= args.getDepartureStop() && args.getDestinationStop() <= group.getRange().end;
+						return group.range.start <= args.departureStop && args.destinationStop <= group.range.end;
 					}})
 				.selectMany(new Selector<StopRangeGroup, Iterable<PlanTicket>>(){
 
 					@Override
 					public Iterable<PlanTicket> select(StopRangeGroup item) {
-						return item.getTickets();
+						return item.tickets;
 					}});
 		
 		
@@ -295,19 +288,19 @@ public class TestTicketPool extends ObjectWithSite
 	private static Class[] _filterTypes = new Class[] {TicketSalableRangeFilter.class, TicketSeatTypeFilter.class, TicketCountFilter.class};
 
 	@Override
-	public TicketPoolQueryArgs toTicketPoolQueryArgs(TicketQueryArgs args)
+	public TicketPoolQueryArgs toTicketPoolQueryArgs(TicketQueryEvent args)
 			throws Exception {
 		TicketPoolQueryArgs rs = new TicketPoolQueryArgs();
-		rs.setDepartureStop(this.getStationSequence(args.getDepartureStation()));
-		rs.setDestinationStop(this.getStationSequence(args.getDestinationStation()));
+		rs.departureStop = this.getStationSequence(args.departureStation);
+		rs.destinationStop = this.getStationSequence(args.destinationStation);
 		
-		if(rs.getDestinationStop() <= rs.getDepartureStop())
+		if(rs.destinationStop <= rs.departureStop)
 		{
 			throw new IllegalArgumentException("Destination station must be after the departure station.");
 		}
 		
-		rs.setCount(args.getCount());
-		rs.setSeatType(args.getSeatType());
+		rs.count = args.count;
+		rs.seatType = args.seatType;
 		
 		
 		
@@ -328,29 +321,29 @@ public class TestTicketPool extends ObjectWithSite
 		{
 			final TicketPoolTicket pt = poolTickets[i];
 		    Ticket ticket = new Ticket();
-		    ticket.setId(UUID.randomUUID());
-		    ticket.setTrainNumber(this.getTrain().getTrainNumber().getName());
-		    ticket.setSeatNumber(pt.getSeat().getSeatNumber());
-		    ticket.setCar(Integer.toString(pt.getSeat().getCar().getCarNumber()));
+		    ticket.id = UUID.randomUUID();
+		    ticket.trainNumber = this.train.trainNumber.name;
+		    ticket.seatNumber = pt.seat.seatNumber;
+		    ticket.car = Integer.toString(pt.seat.car.carNumber);
 		    String seatTypeName = Queries.query(repo.getSeatTypes())
 		        .where(new Predicate<SeatType>(){
 
 				    @Override
 				    public boolean evaluate(SeatType seatType) throws Exception {
-					    return seatType.getCode() == pt.getSeat().getSeatType();
+					    return seatType.code == pt.seat.seatType;
 				    }})
 				.select(new Selector<SeatType, String>(){
 
 					@Override
 					public String select(SeatType seatType) {
-						return seatType.getName();
+						return seatType.name;
 					}})
 				.first();
-		    ticket.setSeatType(seatTypeName);
+		    ticket.seatType = seatTypeName;
 		    
-		    ticket.setDepartureStation(this._route.getStops().get(pt.getDepartureStop()).getStation().getName());
-		    ticket.setDestinationStation(this._route.getStops().get(pt.getDestinationStop()).getStation().getName());
-		    ticket.setDepartureDate(this._train.getDepartureDate());
+		    ticket.departureStation = this.route.stops.get(pt.departureStop).station.name;
+		    ticket.destinationStation = this.route.stops.get(pt.destinationStop).station.name;
+		    ticket.departureDate = this.train.departureDate;
 		    
 		    rs[i] = ticket;
 		   

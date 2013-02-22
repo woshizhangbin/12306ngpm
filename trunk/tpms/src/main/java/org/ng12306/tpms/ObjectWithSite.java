@@ -1,14 +1,15 @@
-package org.ng12306.tpms.runtime;
+package org.ng12306.tpms;
+
 
 public class ObjectWithSite implements IObjectWithSite
 {
-	private IServiceProvider privateSite;
+	private IServiceProvider _site;
 	public final IServiceProvider getSite()
 	{
-		return privateSite;
+		return _site;
 	}
 	public final void setSite(IServiceProvider value)
 	{
-		privateSite = value;
+		_site = value;
 	}
 }

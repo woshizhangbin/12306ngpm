@@ -17,44 +17,37 @@ import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.handler.codec.serialization.ClassResolvers;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 
-import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
 import org.junit.*;
+
 import static org.junit.Assert.*;
 import static org.ng12306.tpms.support.TestConstants.*;
 
-import org.ng12306.tpms.runtime.*;
 import org.ng12306.tpms.support.ObjectBsonEncoder;
 import org.ng12306.tpms.support.ObjectBsonDecoder;
 
-public class NettyIntegrationTest {
-     class TestQueryTrainServerHandler extends SimpleChannelUpstreamHandler {
-	  @Override
-	  public void messageReceived(ChannelHandlerContext ctx,
-				      MessageEvent e) {
-	       TicketQueryArgs event = (TicketQueryArgs)e.getMessage();
-	       event.channel = e.getChannel();
-	       EventBus.publishQueryEvent(event);
-	  }
-     }
 
+public class NettyIntegrationTest {
+     
      // 用于在测试用例里向票池服务发送车次查询的Netty处理函数
      class TestQueryTrainHandler extends SimpleChannelUpstreamHandler {
 	  // 要向服务器发送的查询数据包 - 包含车次号
-	  private final TicketQueryArgs _event;
+	  private final TicketQueryEvent _event;
+	  // private Train[] _response;
+	  // public Train[] getResponse() { return _response; }
 	  private TicketQueryResult _response;
 	  public TicketQueryResult getResponse() { return _response; }
 	 
 	  public TestQueryTrainHandler(String trainId) {
-	       _event = new TicketQueryArgs();
-	       _event.setAction(TicketQueryAction.Query);
-	       _event.setTrainNumber(trainId);
-	       _event.setDate(new LocalDate().plusDays(1));
-	       _event.setDepartureStation("北京南");
-	       _event.setDestinationStation("南京南");
-	       _event.setSeatType(-1);
-	       _event.setCount(1);
+	       _event = new TicketQueryEvent();
+	       _event.action = TicketQueryAction.Query;
+	       _event.trainNumber = trainId;
+	       _event.date = LocalDate.now().plusDays(1);
+	       _event.departureStation = "北京南";
+	       _event.destinationStation = "上海虹桥";
+	       _event.count = 1;
+	       _event.seatType = ~0;
 	  }
 	  
 	  @Override
@@ -66,6 +59,7 @@ public class NettyIntegrationTest {
 	  @Override
 	  public void messageReceived(ChannelHandlerContext ctx,
 				      MessageEvent e) {
+	       // _response = (Train[])e.getMessage();
 	       _response = (TicketQueryResult)e.getMessage();
 	       e.getChannel().close();
 	  }
@@ -77,23 +71,75 @@ public class NettyIntegrationTest {
 	       e.getChannel().close();
 	  }
      }
-
-     // 根据虫子的代码,所有的服务都需要预先注册,然后再使用时,通过getRequiredService
-     // 获取,类似Ioc,因此服务器在启动时,需要注册这些服务
-     private void registerService() throws Exception {
-	  ServiceManager
-	       .getServices()
-	       .initializeServices(new Object[] {
-			 new TestRailwayRepository(), 
-			 new TestTicketPoolManager()});
+     
+     @BeforeClass
+     public static void startTPServer() throws Exception
+     {
+    	 //TpServer.start();
      }
+     
+     @AfterClass
+     public static void stopTPServer() throws Exception
+     {
+    	 //TpServer.stop();
+     }
+     
+     // @Test
+     public void 试验根据车次查询结果() throws Exception {
+	  // 启动Netty服务，这个函数应该要放到setUp函数里
+	 
+      
+	  try {
+	       final TestQueryTrainHandler handler = 
+		    new TestQueryTrainHandler("G101");
 
+	       connectToServer(handler);
+
+	       // 等待一秒钟
+	       Thread.sleep(1000);
+	       
+	       // 并验证
+	       TicketQueryResult result = handler.getResponse();
+	       assertTrue(result.hasTicket);
+
+	       /*
+	       Train[] results = handler.getResponse();
+	       assertNotNull(results);
+	       Train result = results[0];
+	       
+	       assertEquals("G101", result.name);
+	       assertEquals("北京南", result.departure);
+	       assertEquals("上海虹桥", result.termination);
+	       
+	       // 一个车次的发车时间应该只有时间，没有日期。
+	       assertEquals("07:00",
+			    result.departureTime);
+	       assertEquals("12:23",
+			    result.arrivalTime);
+	       
+	       // TODO: 这个断言是有问题的,因为我没有车次的具体座位配置.
+	       // 等业务网关组的服务出来之后，再来更新这个测试用例
+	       assertEquals(2, result.availables.length);
+	       */
+	  } finally { 
+	     
+	  }
+     }
+     
+     
+     @Test
+     public void testSaleAll()
+     {
+    	 
+     }
+     
+    
      @Test
      public void 由车次查询结果定义票池服务器API() throws Exception {
 	  // 启动Netty服务，这个函数应该要放到setUp函数里
-	  startRealServer();
+	
 
-	  try {
+    	 TpServer.start();
 	       final TestQueryTrainHandler handler = 
 		    new TestQueryTrainHandler("G101");
 	       
@@ -105,28 +151,31 @@ public class NettyIntegrationTest {
 	       
 	       // 并验证
 	       TicketQueryResult result = handler.getResponse();
-	       assertTrue(result.getHasTicket());
-	  } finally { 
-	       stopRealServer();
-	  }
+	       assertTrue(result.hasTicket);
+	       /*
+	       Train[] results = handler.getResponse();
+	       assertNotNull(results);
+	       Train result = results[0];
+	       
+	       assertEquals("G101", result.name);
+	       assertEquals("北京南", result.departure);
+	       assertEquals("上海虹桥", result.termination);
+	       
+	       // 一个车次的发车时间应该只有时间，没有日期。
+	       assertEquals("07:00",
+			    result.departureTime);
+	       assertEquals("12:23",
+			    result.arrivalTime);
+	       
+	       // TODO: 这个断言是有问题的,因为我没有车次的具体座位配置.
+	       // 等业务网关组的服务出来之后，再来更新这个测试用例
+	       assertEquals(2, result.availables.length);
+	       */
+	       TpServer.stop();
      }
 
-     // 这个就是真正的票池服务器了，为了隐藏后面的具体实现，定义一个接口ITpServer
-     private ITpServer _itpServer;
-     private void startRealServer() throws Exception {
-	  // TODO: TpServer应该由Ioc创建，
-	  // 现在为了定义API就直接创建新实例了。
-	  _itpServer = new TpServer(TP_SERVER_PORT);
+    
 
-	  // 票池服务器应该启动disruptor event bus。
-	  _itpServer.start();
-     }
-
-     private void stopRealServer() throws Exception {
-	  if ( _itpServer != null ) {
-	       _itpServer.stop();
-	  }
-     }
 
      // 我特烦Java强制在函数里声明自己可能扔出的异常，我知道Java的初衷是好的，但是
      // ...
@@ -142,6 +191,7 @@ public class NettyIntegrationTest {
 	  bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
 		    public ChannelPipeline getPipeline() 
 			 throws Exception {
+			 // 查询G101
 			 return Channels.pipeline(
 			      // 使用自定义的bson格式序列化
 			      new ObjectBsonEncoder(),

@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.diting.collections.Queries;
 import org.diting.collections.Selector;
 import org.joda.time.LocalDate;
+import org.ng12306.tpms.ServiceBase;
 
 public class TestRailwayRepository extends ServiceBase 
     implements IRailwayRepository {
@@ -60,13 +61,13 @@ public class TestRailwayRepository extends ServiceBase
         
 		
 		TrainNumber rs = new TrainNumber();
-		rs.setId(UUID.randomUUID());
-		rs.setName("K600/K597");
+		rs.id = UUID.randomUUID();
+		rs.name = "K600/K597";
 		Route route = new Route();
-		route.setId(UUID.randomUUID());
-		route.setStartDate(new LocalDate(0L));
-		route.setEndDate(LocalDate.now().plusYears(10));
-		rs.getRoutes().add(route);
+		route.id = UUID.randomUUID();
+		route.startDate = new LocalDate(0L);
+		route.endDate = LocalDate.now().plusYears(10);
+		rs.routes.add(route);
 	
 		Station[] stations = Arrays.copyOfRange(this._stations, 8, this._stations.length);
 		
@@ -74,10 +75,10 @@ public class TestRailwayRepository extends ServiceBase
 		for(int i = 0; i <stations.length; i ++)
 		{
 		    RouteStop stop = new RouteStop();
-		    stop.setId(UUID.randomUUID());
-		    stop.setSequence(i);
-		    stop.setStation(stations[i]);
-		    route.getStops().add(stop);
+		    stop.id = UUID.randomUUID();
+		    stop.sequence = i;
+		    stop.station = stations[i];
+		    route.stops.add(stop);
 		}
 		
 		
@@ -87,21 +88,21 @@ public class TestRailwayRepository extends ServiceBase
 	private TrainNumber CreateG101() {
 		TrainNumber rs = new TrainNumber();
 		
-		rs.setId(UUID.randomUUID());
-		rs.setName("G101");
+		rs.id = UUID.randomUUID();
+		rs.name = "G101";
 		Route route = new Route();
-		route.setId(UUID.randomUUID());
-		route.setStartDate(new LocalDate(0L));
-		route.setEndDate(LocalDate.now().plusYears(10));
-		rs.getRoutes().add(route);
+		route.id = UUID.randomUUID();
+		route.startDate = new LocalDate(0L);
+		route.endDate = LocalDate.now().plusYears(10);
+		rs.routes.add(route);
 	
 		for(int i = 0; i <=7; i ++)
 		{
 		    RouteStop stop = new RouteStop();
-		    stop.setId(UUID.randomUUID());
-		    stop.setSequence(i);
-		    stop.setStation(this._stations[i]);
-		    route.getStops().add(stop);
+		    stop.id = UUID.randomUUID();
+		    stop.sequence = i;
+		    stop.station = this._stations[i];
+		    route.stops.add(stop);
 		}
 		
 		
@@ -114,20 +115,20 @@ public class TestRailwayRepository extends ServiceBase
 		for(int i = 1; i <= 118; i ++)
 		{
 			Seat seat = new Seat();
-			seat.setId(UUID.randomUUID());
-			seat.setNumber(Integer.toString(i));
-			seat.setType(1L);
-		    this._carTypes[0].getSeats().add(seat);
+			seat.id = UUID.randomUUID();
+			seat.number = Integer.toString(i);
+			seat.type = (1L);
+		    this._carTypes[0].seats.add(seat);
 		}
 		
 		this._carTypes[1] = new CarType(UUID.randomUUID(), "硬卧车", 4L);
 		for(int i = 1; i <= 66; i ++)
 		{
 			Seat seat = new Seat();
-			seat.setId(UUID.randomUUID());
-			seat.setNumber(Integer.toString(i));
-			seat.setType(4L);
-		    this._carTypes[1].getSeats().add(seat);
+			seat.id = UUID.randomUUID();
+			seat.number = Integer.toString(i);
+			seat.type = 4L;
+		    this._carTypes[1].seats.add(seat);
 		}
 		
 	
@@ -135,20 +136,20 @@ public class TestRailwayRepository extends ServiceBase
 		for(int i = 1; i <= 118; i ++)
 		{
 			Seat seat = new Seat();
-			seat.setId(UUID.randomUUID());
-			seat.setNumber(Integer.toString(i));
-			seat.setType(2L);
-		    this._carTypes[2].getSeats().add(seat);
+			seat.id = UUID.randomUUID();
+			seat.number = Integer.toString(i);
+			seat.type = 2L;
+		    this._carTypes[2].seats.add(seat);
 		}
 		
 		this._carTypes[3] = new CarType(UUID.randomUUID(), "二级软卧", 8L);
 		for(int i = 1; i <= 44; i ++)
 		{
 			Seat seat = new Seat();
-			seat.setId(UUID.randomUUID());
-			seat.setNumber(Integer.toString(i));
-			seat.setType(8L);
-		    this._carTypes[3].getSeats().add(seat);
+			seat.id = UUID.randomUUID();
+			seat.number = Integer.toString(i);
+			seat.type = 8L;
+		    this._carTypes[3].seats.add(seat);
 		}
 		
 		
@@ -175,8 +176,8 @@ public class TestRailwayRepository extends ServiceBase
 			@Override
 			public Station select(String name) {
 				Station rs = new Station();
-				rs.setId(UUID.randomUUID());
-				rs.setName(name);
+				rs.id = UUID.randomUUID();
+				rs.name = name;
 				return rs;
 			}}).toArray(new Station[0]);
 		

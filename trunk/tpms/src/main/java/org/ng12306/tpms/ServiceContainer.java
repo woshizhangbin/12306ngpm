@@ -1,4 +1,6 @@
-package org.ng12306.tpms.runtime;
+package org.ng12306.tpms;
+
+import org.ng12306.tpms.runtime.MissingRequiredServiceException;
 
 
 
@@ -80,6 +82,7 @@ public class ServiceContainer implements IServiceProvider {
 
 			}
 		}
+	    this._list.clear();
 	}
 
 	public Object getService2(java.lang.Class serviceType) throws Exception {

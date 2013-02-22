@@ -1,6 +1,7 @@
-package org.ng12306.tpms.runtime;
+package org.ng12306.tpms;
 
 import java.util.*;
+
 
 public abstract class ServiceBase implements IService, IObjectWithSite
 {	

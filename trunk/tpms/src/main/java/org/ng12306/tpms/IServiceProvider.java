@@ -1,4 +1,4 @@
-package org.ng12306.tpms.runtime;
+package org.ng12306.tpms;
 
 @SuppressWarnings("rawtypes")
 public interface IServiceProvider {

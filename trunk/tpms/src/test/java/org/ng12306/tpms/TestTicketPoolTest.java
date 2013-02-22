@@ -37,16 +37,16 @@ public class TestTicketPoolTest {
 
 					@Override
 					public boolean evaluate(TrainNumber obj) throws Exception {
-						return obj.getName().equals("G101");
+						return obj.name.equals("G101");
 					}
 				});
 
 		LocalDate today = LocalDate.now();
 
 		org.ng12306.tpms.runtime.Train train = new org.ng12306.tpms.runtime.Train();
-		train.setId(UUID.randomUUID());
-		train.setDepartureDate(today);
-		train.setTrainNumber(tn);
+		train.id = UUID.randomUUID();
+		train.departureDate = today;
+		train.trainNumber = tn;
 
 		TestTicketPool pool = new TestTicketPool(train);
 		pool.setSite(ServiceManager.getServices());
@@ -63,13 +63,13 @@ public class TestTicketPoolTest {
 	@Test
 	public void testBook() throws Exception {
 		//Create query arguments. TicketQueryArgs is used for external client with human readable parameters.
-		TicketQueryArgs query = new TicketQueryArgs();
-		query.setDate(LocalDate.now());
-		query.setDepartureStation("北京南");
-		query.setDestinationStation("南京南");
-		query.setTrainNumber("G101");
-		query.setSeatType(-1);
-		query.setCount(1);
+		TicketQueryEvent query = new TicketQueryEvent();
+		query.date = LocalDate.now();
+		query.departureStation = "北京南";
+		query.destinationStation = "南京南";
+		query.trainNumber = "G101";
+		query.seatType = -1;
+		query.count = 1;
 
 		
 		
@@ -93,11 +93,11 @@ public class TestTicketPoolTest {
 		
 		Ticket ticket = tickets[0];
 		
-		Assert.assertEquals(LocalDate.now(), ticket.getDepartureDate());
+		Assert.assertEquals(LocalDate.now(), ticket.departureDate);
 		
-		Assert.assertEquals("北京南", ticket.getDepartureStation());
-		Assert.assertEquals("南京南", ticket.getDestinationStation());
-		Assert.assertEquals("G101", ticket.getTrainNumber());
+		Assert.assertEquals("北京南", ticket.departureStation);
+		Assert.assertEquals("南京南", ticket.destinationStation);
+		Assert.assertEquals("G101", ticket.trainNumber);
 		
 
 	}
@@ -118,12 +118,12 @@ public class TestTicketPoolTest {
 		TestTicketPool pool = this.createTicketPool();
 		
 	
-		int stopCount = pool.getRoute().getStops().size();
+		int stopCount = pool.route.stops.size();
 		
 		TicketPoolQueryArgs query = new TicketPoolQueryArgs();
 		
-		query.setCount(1);
-		query.setSeatType(~0);
+		query.count = 1;
+		query.seatType = ~0;
 	
 		
 		ArrayList<TicketPoolTicket> soldTickets = new ArrayList<TicketPoolTicket>(10000);
@@ -139,8 +139,8 @@ public class TestTicketPoolTest {
 			{
 				int departure = Math.min(v1, v2);
 				int destination = Math.max(v1, v2);
-				query.setDepartureStop(departure);
-				query.setDestinationStop(destination);
+				query.departureStop = departure;
+				query.destinationStop = destination;
 				
 				TicketPoolTicket[] tickets = pool.book(query);
 				for(TicketPoolTicket t : tickets)
@@ -154,7 +154,7 @@ public class TestTicketPoolTest {
 
 			@Override
 			public OperatingSeat select(TicketPoolTicket item) {
-				return item.getSeat();
+				return item.seat;
 			}});
 		
 		for(IGrouping<OperatingSeat, TicketPoolTicket> g : groups)
@@ -168,13 +168,13 @@ public class TestTicketPoolTest {
 
 				@Override
 				public Integer select(TicketPoolTicket item) {
-					return item.getDepartureStop();
+					return item.departureStop;
 				}}))
 			{
 				
 				
-				Assert.assertEquals(stop, t.getDepartureStop());
-				stop = t.getDestinationStop();
+				Assert.assertEquals(stop, t.departureStop);
+				stop = t.destinationStop;
 			}
 			
 			Assert.assertEquals(stopCount - 1, stop);

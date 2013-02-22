@@ -7,5 +7,5 @@ public class TestConstants {
     public static final String TP_SERVER_ADDRESS = "localhost";
     
     // 票池服务的默认监听端口
-    public static final int TP_SERVER_PORT = 12307;
+    public static final int TP_SERVER_PORT = 12306;
 }

@@ -5,25 +5,11 @@ import java.util.*;
   class StopRangeGroup {
 	
 	  
-    private StopRange Range;
+    public StopRange range;
 
-	public StopRange getRange() {
-		return this.Range;
-	}
-
-	public void setRange(StopRange value) {
-		this.Range = value;
-	}
+	public ArrayList<PlanTicket> tickets = new ArrayList<PlanTicket>();
 
 	
-
-	
-	
-	private ArrayList<PlanTicket> _tickets = new ArrayList<PlanTicket>();
-
-	public Collection<PlanTicket> getTickets() {
-		return this._tickets;
-	}
 
 	
 	

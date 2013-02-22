@@ -1,6 +1,7 @@
 package org.ng12306.tpms.runtime;
 
 import org.diting.collections.*;
+import org.ng12306.tpms.ObjectWithSite;
 
 public class TicketSeatTypeFilter extends ObjectWithSite
    implements IPlanTicketFilter
@@ -14,8 +15,8 @@ public class TicketSeatTypeFilter extends ObjectWithSite
 			@Override
 			public boolean evaluate(PlanTicket ticket) throws Exception {
 				
-				long t1 = ticket.getSeat().getSeatType();
-				long t2 = args.getSeatType();
+				long t1 = ticket.seat.seatType;
+				long t2 = args.seatType;
 				
 				return (t1 & t2) != 0;
 				
